@@ -1,0 +1,285 @@
+{% extends 'base.html' %}
+
+{% block title %}Blog Posts - Echo{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card glass-card mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="card-title with-line mb-0">
+                        {% if current_category %}
+                            <i class="fas fa-folder-open me-2"></i>
+                            {{ current_category }}
+                        {% else %}
+                            <i class="fas fa-blog me-2"></i>
+                            Blog Posts
+                        {% endif %}
+                    </h2>
+                    
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'create_post' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i> New Post
+                    </a>
+                    {% endif %}
+                </div>
+                
+                <!-- Search Form -->
+                <form action="{% url 'search' %}" method="GET" class="mb-4">
+                    <div class="input-group">
+                        <input type="text" name="q" class="form-control" placeholder="Search posts..." value="{{ search_query|default:'' }}">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+                
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                {% if posts %}
+                    <div class="row">
+                        {% for post in posts %}
+                            <div class="col-md-6 mb-4">
+                                <div class="card post-card h-100">
+                                    {% if post.featured_image %}
+                                    <div class="card-img-top-container">
+                                        <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" class="card-img-top">
+                                    </div>
+                                    {% endif %}
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="badge bg-primary-subtle text-primary-emphasis">
+                                                <i class="fas fa-calendar-alt me-1"></i>{{ post.created_at|date:"M d, Y" }}
+                                            </span>
+                                            {% if post.categories.all %}
+                                            <span>
+                                                {% for category in post.categories.all|slice:":1" %}
+                                                <a href="{% url 'category_detail' category.slug %}" class="badge bg-secondary-subtle text-secondary-emphasis text-decoration-none">
+                                                    <i class="fas fa-folder me-1"></i>{{ category.name }}
+                                                </a>
+                                                {% endfor %}
+                                                {% if post.categories.all|length > 1 %}
+                                                <span class="badge bg-secondary-subtle text-secondary-emphasis">+{{ post.categories.all|length|add:"-1" }}</span>
+                                                {% endif %}
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        <h5 class="card-title mb-2">{{ post.title }}</h5>
+                                        <p class="card-text">{{ post.content|truncatechars:100 }}</p>
+                                    </div>
+                                    <div class="card-footer bg-transparent border-0">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <a href="{% url 'blog_detail' post.id %}" class="btn btn-sm btn-outline-primary">Read More</a>
+                                            <small class="text-muted">
+                                                By <a href="{% url 'blogger_detail' post.author.id %}">{{ post.author.username }}</a>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if posts.has_other_pages %}
+                    <nav class="mt-4" aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if posts.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ posts.previous_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link" aria-hidden="true">&laquo;</span>
+                            </li>
+                            {% endif %}
+                            
+                            {% for i in posts.paginator.page_range %}
+                                {% if posts.number == i %}
+                                <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                                {% else %}
+                                <li class="page-item"><a class="page-link" href="?page={{ i }}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">{{ i }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if posts.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ posts.next_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link" aria-hidden="true">&raquo;</span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center my-5">
+                        <p>No posts available yet.</p>
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'create_post' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i> Create First Post
+                        </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Categories -->
+        <div class="card glass-card mb-4">
+            <div class="card-body">
+                <h5 class="card-title with-line">
+                    <i class="fas fa-folder me-2"></i>Categories
+                </h5>
+                
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent border-bottom border-secondary">
+                        <a href="{% url 'blog_list' %}" class="category-link text-light {% if not current_category %}active{% endif %}">All Categories</a>
+                        <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis">{{ posts.paginator.count }}</span>
+                    </li>
+                    {% for category in categories %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent {% if not forloop.last %}border-bottom border-secondary{% endif %}">
+                        <a href="{% url 'category_detail' category.slug %}" class="category-link text-light {% if current_category == category.slug %}active{% endif %}">{{ category.name }}</a>
+                        <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis">{{ category.posts.count }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                
+                <div class="text-center mt-3">
+                    <a href="{% url 'category_list' %}" class="btn btn-sm btn-outline-light">
+                        <i class="fas fa-th-list me-1"></i>View All Categories
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Links -->
+        <div class="card glass-card">
+            <div class="card-body">
+                <h5 class="card-title with-line">
+                    <i class="fas fa-link me-2"></i>Quick Links
+                </h5>
+                
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item bg-transparent border-bottom border-secondary">
+                        <a href="{% url 'home' %}" class="text-light d-flex align-items-center">
+                            <i class="fas fa-home me-2"></i>
+                            <span>Home</span>
+                        </a>
+                    </li>
+                    <li class="list-group-item bg-transparent border-bottom border-secondary">
+                        <a href="{% url 'blogger_list' %}" class="text-light d-flex align-items-center">
+                            <i class="fas fa-users me-2"></i>
+                            <span>Bloggers</span>
+                        </a>
+                    </li>
+                    {% if user.is_authenticated %}
+                    <li class="list-group-item bg-transparent border-bottom border-secondary">
+                        <a href="{% url 'create_post' %}" class="text-light d-flex align-items-center">
+                            <i class="fas fa-plus-circle me-2"></i>
+                            <span>Create Post</span>
+                        </a>
+                    </li>
+                    <li class="list-group-item bg-transparent">
+                        <a href="{% url 'blogger_detail' user.id %}" class="text-light d-flex align-items-center">
+                            <i class="fas fa-user me-2"></i>
+                            <span>My Profile</span>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item bg-transparent">
+                        <a href="{% url 'login' %}" class="text-light d-flex align-items-center">
+                            <i class="fas fa-sign-in-alt me-2"></i>
+                            <span>Sign In</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card-img-top-container {
+        height: 160px;
+        overflow: hidden;
+    }
+    
+    .card-img-top {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .bg-primary-subtle {
+        background-color: rgba(138, 43, 226, 0.2);
+    }
+    
+    .text-primary-emphasis {
+        color: var(--accent);
+    }
+    
+    .bg-secondary-subtle {
+        background-color: rgba(108, 117, 125, 0.2);
+    }
+    
+    .text-secondary-emphasis {
+        color: #ADB5BD;
+    }
+    
+    .list-group-item {
+        padding: 0.75rem 0;
+    }
+    
+    .category-link {
+        text-decoration: none;
+        transition: all 0.2s ease;
+        padding: 0.25rem 0;
+    }
+    
+    .category-link:hover, .category-link.active {
+        color: var(--accent) !important;
+        transform: translateX(5px);
+    }
+    
+    .page-link {
+        background-color: rgba(16, 16, 36, 0.8);
+        border-color: rgba(138, 43, 226, 0.3);
+        color: var(--text-light);
+    }
+    
+    .page-link:hover {
+        background-color: rgba(30, 30, 60, 0.8);
+        border-color: rgba(138, 43, 226, 0.5);
+        color: var(--accent);
+    }
+    
+    .page-item.active .page-link {
+        background-color: var(--primary);
+        border-color: var(--primary);
+    }
+    
+    .page-item.disabled .page-link {
+        background-color: rgba(16, 16, 36, 0.5);
+        border-color: rgba(138, 43, 226, 0.2);
+        color: rgba(255, 255, 255, 0.5);
+    }
+</style>
+{% endblock %} 

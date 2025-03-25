@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Results - Echo{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card glass-card mb-4">
+            <div class="card-body">
+                <h2 class="card-title with-line">
+                    <i class="fas fa-search me-2"></i>
+                    Search Results
+                </h2>
+
+                <!-- Search Form -->
+                <div class="mb-4">
+                    <form action="{% url 'search' %}" method="GET" class="d-flex">
+                        <input type="text" name="q" class="form-control me-2" placeholder="Search posts..." value="{{ query }}">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+                </div>
+
+                {% if query %}
+                    <p class="text-muted mb-4">
+                        Found {{ posts.paginator.count }} result{{ posts.paginator.count|pluralize }} for "{{ query }}"
+                    </p>
+
+                    {% if posts %}
+                    <div class="row">
+                        {% for post in posts %}
+                            <div class="col-md-6 mb-4">
+                                <div class="card post-card h-100">
+                                    {% if post.featured_image %}
+                                    <div class="card-img-top-container">
+                                        <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" class="card-img-top">
+                                    </div>
+                                    {% endif %}
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="badge bg-primary-subtle text-primary-emphasis">
+                                                <i class="fas fa-calendar-alt me-1"></i>{{ post.created_at|date:"M d, Y" }}
+                                            </span>
+                                            {% if post.categories.all %}
+                                            <span>
+                                                {% for category in post.categories.all|slice:":1" %}
+                                                <a href="{% url 'category_detail' category.slug %}" class="badge bg-secondary-subtle text-secondary-emphasis text-decoration-none">
+                                                    <i class="fas fa-folder me-1"></i>{{ category.name }}
+                                                </a>
+                                                {% endfor %}
+                                                {% if post.categories.all|length > 1 %}
+                                                <span class="badge bg-secondary-subtle text-secondary-emphasis">+{{ post.categories.all|length|add:"-1" }}</span>
+                                                {% endif %}
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        <h5 class="card-title mb-2">{{ post.title }}</h5>
+                                        <p class="card-text">{{ post.content|truncatechars:100 }}</p>
+                                    </div>
+                                    <div class="card-footer bg-transparent border-0">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <a href="{% url 'blog_detail' post.id %}" class="btn btn-sm btn-outline-primary">Read More</a>
+                                            <small class="text-muted">
+                                                By <a href="{% url 'blogger_detail' post.author.id %}">{{ post.author.username }}</a>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if posts.has_other_pages %}
+                    <nav class="mt-4" aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if posts.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?q={{ query }}&page={{ posts.previous_page_number }}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link" aria-hidden="true">&laquo;</span>
+                            </li>
+                            {% endif %}
+                            
+                            {% for i in posts.paginator.page_range %}
+                                {% if posts.number == i %}
+                                <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                                {% else %}
+                                <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ i }}">{{ i }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if posts.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?q={{ query }}&page={{ posts.next_page_number }}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link" aria-hidden="true">&raquo;</span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                    
+                    {% else %}
+                    <div class="text-center my-5">
+                        <p>No results found for "{{ query }}".</p>
+                        <p>Try different keywords or <a href="{% url 'blog_list' %}">browse all posts</a>.</p>
+                    </div>
+                    {% endif %}
+                {% else %}
+                <div class="text-center my-5">
+                    <p>Enter a search term to find posts.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card-img-top-container {
+        height: 160px;
+        overflow: hidden;
+    }
+    
+    .card-img-top {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .bg-secondary-subtle {
+        background-color: rgba(108, 117, 125, 0.2);
+    }
+    
+    .text-secondary-emphasis {
+        color: #ADB5BD;
+    }
+    
+    .page-link {
+        background-color: rgba(16, 16, 36, 0.8);
+        border-color: rgba(138, 43, 226, 0.3);
+        color: var(--text-light);
+    }
+    
+    .page-link:hover {
+        background-color: rgba(30, 30, 60, 0.8);
+        border-color: rgba(138, 43, 226, 0.5);
+        color: var(--accent);
+    }
+    
+    .page-item.active .page-link {
+        background-color: var(--primary);
+        border-color: var(--primary);
+    }
+    
+    .page-item.disabled .page-link {
+        background-color: rgba(16, 16, 36, 0.5);
+        border-color: rgba(138, 43, 226, 0.2);
+        color: rgba(255, 255, 255, 0.5);
+    }
+</style>
+{% endblock %} 

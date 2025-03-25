@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ post.title }} - Echo{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <!-- Blog Post -->
+        <div class="card glass-card mb-4">
+            <div class="card-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                {% if post.featured_image %}
+                <div class="featured-image-container mb-4">
+                    <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" class="img-fluid rounded">
+                </div>
+                {% endif %}
+                
+                <h1 class="card-title">{{ post.title }}</h1>
+                
+                <div class="post-meta d-flex justify-content-between align-items-center mb-4">
+                    <div class="author-date">
+                        By <a href="{% url 'blogger_detail' post.author.id %}" class="text-light">{{ post.author.username }}</a> 
+                        on {{ post.created_at|date:"F j, Y" }}
+                    </div>
+                    
+                    {% if user.is_authenticated and user.id == post.author.id or user.is_staff %}
+                    <div class="post-actions">
+                        <a href="{% url 'edit_post' post.id %}" class="btn btn-sm btn-outline-light me-2">
+                            <i class="fas fa-edit me-1"></i> Edit
+                        </a>
+                        <a href="{% url 'delete_post' post.id %}" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash-alt me-1"></i> Delete
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if post.categories.exists %}
+                <div class="categories mb-4">
+                    <span class="text-muted">Categories: </span>
+                    {% for category in post.categories.all %}
+                        <a href="{% url 'category_detail' category.slug %}" class="badge bg-primary-subtle text-primary-emphasis text-decoration-none me-1">
+                            <i class="fas fa-folder me-1"></i>{{ category.name }}
+                        </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <div class="card-text content">
+                    {{ post.content|linebreaks }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-md-4">
+        <div class="card glass-card mb-4">
+            <div class="card-body">
+                <h5 class="card-title with-line mb-3">About the Author</h5>
+                <div class="d-flex align-items-center mb-3">
+                    {% if post.author.profile_picture %}
+                        <img src="{{ post.author.profile_picture.url }}" alt="{{ post.author.username }}" class="rounded-circle me-3 profile-image">
+                    {% else %}
+                        <div class="profile-image-placeholder me-3">
+                            <span>{{ post.author.username|first|upper }}</span>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <h6 class="mb-1"><a href="{% url 'blogger_detail' post.author.id %}" class="text-light">{{ post.author.username }}</a></h6>
+                        {% if post.author.bio %}
+                            <p class="small text-muted mb-0">{{ post.author.bio|truncatewords:20 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if post.author.full_name or post.author.location or post.author.website %}
+                <div class="author-details mt-3">
+                    <ul class="list-group list-group-flush">
+                        {% if post.author.full_name %}
+                        <li class="list-group-item bg-transparent border-bottom border-secondary py-2">
+                            <i class="fas fa-user me-2 text-muted"></i>
+                            <span>{{ post.author.full_name }}</span>
+                        </li>
+                        {% endif %}
+                        
+                        {% if post.author.location %}
+                        <li class="list-group-item bg-transparent border-bottom border-secondary py-2">
+                            <i class="fas fa-map-marker-alt me-2 text-muted"></i>
+                            <span>{{ post.author.location }}</span>
+                        </li>
+                        {% endif %}
+                        
+                        {% if post.author.website %}
+                        <li class="list-group-item bg-transparent py-2">
+                            <i class="fas fa-globe me-2 text-muted"></i>
+                            <a href="{{ post.author.website }}" target="_blank" rel="noopener noreferrer" class="text-light">
+                                {{ post.author.website|truncatechars:25 }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card glass-card">
+            <div class="card-body">
+                <h5 class="card-title with-line mb-3">Quick Links</h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item bg-transparent border-bottom border-secondary py-2">
+                        <a href="{% url 'blog_list' %}" class="text-light d-flex align-items-center">
+                            <i class="fas fa-th-list me-2"></i>
+                            <span>All Blog Posts</span>
+                        </a>
+                    </li>
+                    
+                    {% if post.categories.exists %}
+                    <li class="list-group-item bg-transparent border-bottom border-secondary py-2">
+                        <span class="text-muted">Related Categories:</span>
+                        <div class="mt-2">
+                            {% for category in post.categories.all %}
+                            <a href="{% url 'category_detail' category.slug %}" class="badge bg-primary-subtle text-primary-emphasis text-decoration-none me-1 mb-1">
+                                {{ category.name }}
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </li>
+                    {% endif %}
+                    
+                    <li class="list-group-item bg-transparent py-2">
+                        <a href="{% url 'about' %}" class="text-light d-flex align-items-center">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <span>About Us</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Comments Section -->
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card glass-card mb-4">
+            <div class="card-body">
+                <h4 class="card-title with-line mb-4">
+                    <i class="fas fa-comments me-2"></i>
+                    Comments ({{ comments.count }})
+                </h4>
+                
+                {% if comments %}
+                <div class="comments-list mb-4">
+                    {% for comment in comments %}
+                    <div class="comment mb-4">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                {% if comment.author.profile_picture %}
+                                <img src="{{ comment.author.profile_picture.url }}" alt="{{ comment.author.username }}" class="rounded-circle comment-avatar">
+                                {% else %}
+                                <div class="comment-avatar-placeholder">
+                                    <span>{{ comment.author.username|first|upper }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <h6 class="mb-0">{{ comment.author.username }}</h6>
+                                    <small class="text-muted">{{ comment.created_at|date:"M d, Y" }}</small>
+                                </div>
+                                <p class="mb-0">{{ comment.content|linebreaks }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-4">No comments yet. Be the first to comment!</p>
+                {% endif %}
+                
+                {% if user.is_authenticated %}
+                <form method="POST" action="{% url 'add_comment' post.id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">Add a Comment</label>
+                        <textarea class="form-control" id="comment" name="content" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-1"></i> Post Comment
+                    </button>
+                </form>
+                {% else %}
+                <div class="alert alert-info">
+                    <p class="mb-0">Please <a href="{% url 'login' %}">sign in</a> to leave a comment.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .featured-image-container {
+        max-height: 400px;
+        overflow: hidden;
+        border-radius: var(--card-border-radius);
+    }
+    
+    .profile-image {
+        width: 64px;
+        height: 64px;
+        object-fit: cover;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        border: 2px solid var(--primary-light);
+    }
+    
+    .profile-image-placeholder {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    
+    .content {
+        line-height: 1.8;
+    }
+    
+    .bg-primary-subtle {
+        background-color: rgba(255, 215, 0, 0.2);
+    }
+    
+    .text-primary-emphasis {
+        color: var(--primary);
+    }
+    
+    .post-meta {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+    
+    .btn-outline-danger {
+        border-color: var(--danger);
+        color: var(--danger);
+    }
+    
+    .btn-outline-danger:hover {
+        background-color: rgba(178, 34, 34, 0.1);
+        border-color: var(--danger);
+        color: var(--danger);
+    }
+    
+    .comment-avatar {
+        width: 48px;
+        height: 48px;
+        object-fit: cover;
+    }
+    
+    .comment-avatar-placeholder {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: white;
+    }
+    
+    .comment {
+        position: relative;
+    }
+    
+    .comment:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        bottom: -12px;
+        left: 60px;
+        right: 0;
+        height: 1px;
+        background: rgba(255, 215, 0, 0.2);
+    }
+</style>
+{% endblock %} 

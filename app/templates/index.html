@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Echo{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section mb-5">
+    <div class="row align-items-center">
+        <div class="col-lg-8 mx-auto text-center">
+            <h1 class="display-4 fw-bold mb-4 hero-title">Welcome to <span class="gradient-text">Echo</span></h1>
+            <p class="lead mb-4">A place where thoughts resonate and ideas come to life.</p>
+            <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                <a href="{% url 'blog_list' %}" class="btn btn-primary btn-lg px-4 gap-3">
+                    <i class="fas fa-book-reader me-2"></i>Explore Posts
+                </a>
+                {% if not user.is_authenticated %}
+                <a href="{% url 'register' %}" class="btn btn-outline-light btn-lg px-4">
+                    <i class="fas fa-user-plus me-2"></i>Join Now
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Featured Content -->
+<div class="row mb-5">
+    <div class="col-lg-8 mx-auto">
+        <div class="card glass-card mb-4">
+            <div class="card-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <h2 class="card-title with-line"><i class="fas fa-fire me-2"></i>Latest Posts</h2>
+                
+                {% if latest_posts %}
+                    <div class="row">
+                        {% for post in latest_posts %}
+                            <div class="col-md-4">
+                                <div class="card post-card h-100">
+                                    <div class="card-body">
+                                        <div class="post-meta mb-2">
+                                            <span class="badge bg-primary-subtle text-primary-emphasis">
+                                                <i class="fas fa-calendar-alt me-1"></i>{{ post.created_at|date:"M d, Y" }}
+                                            </span>
+                                        </div>
+                                        <h5 class="card-title mb-3">{{ post.title }}</h5>
+                                        <p class="card-text">{{ post.content|truncatechars:120 }}</p>
+                                    </div>
+                                    <div class="card-footer bg-transparent border-0">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <a href="{% url 'blog_detail' post.id %}" class="btn btn-sm btn-outline-primary">Read More</a>
+                                            <small class="text-muted">
+                                                By <a href="{% url 'blogger_detail' post.author.id %}">{{ post.author.username }}</a>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-center my-5">No posts yet. <a href="{% url 'register' %}">Register</a> and be the first one to post!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Featured Bloggers -->
+<div class="row mb-5">
+    <div class="col-lg-8 mx-auto">
+        <div class="card glass-card">
+            <div class="card-body">
+                <h2 class="card-title with-line"><i class="fas fa-users me-2"></i>Active Bloggers</h2>
+                
+                {% if active_bloggers %}
+                    <div class="row justify-content-center">
+                        {% for blogger in active_bloggers %}
+                            <div class="col-md-4 col-sm-6 mb-4">
+                                <div class="blogger-card text-center">
+                                    {% if blogger.profile_picture %}
+                                        <img src="{{ blogger.profile_picture.url }}" alt="{{ blogger.username }}" class="rounded-circle mb-3 profile-image">
+                                    {% else %}
+                                        <div class="profile-image-placeholder mb-3">
+                                            <span>{{ blogger.username|first|upper }}</span>
+                                        </div>
+                                    {% endif %}
+                                    <h5 class="mb-2">{{ blogger.username }}</h5>
+                                    <p class="small text-muted mb-2">
+                                        {% if blogger.full_name %}{{ blogger.full_name }}{% else %}Blogger{% endif %}
+                                    </p>
+                                    <p class="small text-muted mb-3">
+                                        {{ blogger.blog_posts.count }} post{{ blogger.blog_posts.count|pluralize }}
+                                    </p>
+                                    <a href="{% url 'blogger_detail' blogger.id %}" class="btn btn-sm btn-outline-light">
+                                        <i class="fas fa-user me-1"></i>View Profile
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-center my-5">No active bloggers yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hero-section {
+        padding: 3rem 0;
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, rgba(10, 10, 26, 0.6) 0%, rgba(18, 18, 42, 0.7) 100%);
+        border-radius: var(--card-border-radius);
+        margin-bottom: 3rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSIxIiBmaWxsPSJyZ2JhKDAsIDI1NSwgMjU1LCAwLjA1KSIvPjwvc3ZnPg==') 0 0/100px 100px repeat,
+            radial-gradient(circle at top right, rgba(138, 43, 226, 0.15), transparent 50%),
+            radial-gradient(circle at bottom left, rgba(0, 255, 255, 0.15), transparent 50%);
+        z-index: -1;
+        opacity: 0.6;
+    }
+    
+    .hero-title {
+        margin-bottom: 1.5rem;
+        position: relative;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    .gradient-text {
+        background: linear-gradient(to right, var(--accent), var(--accent-alt));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-fill-color: transparent;
+        font-weight: 700;
+    }
+    
+    .card-title.with-line {
+        position: relative;
+        display: inline-block;
+        margin-bottom: 1.5rem;
+    }
+    
+    .card-title.with-line::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: -0.5rem;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(to right, var(--accent), transparent);
+    }
+    
+    .glass-card {
+        background: linear-gradient(145deg, rgba(18, 18, 42, 0.7) 0%, rgba(28, 28, 60, 0.6) 100%);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(138, 43, 226, 0.2);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+    
+    .post-card {
+        transition: all 0.3s ease;
+        background: linear-gradient(145deg, rgba(20, 20, 45, 0.9) 0%, rgba(30, 30, 65, 0.8) 100%);
+        border: 1px solid rgba(138, 43, 226, 0.2);
+        overflow: hidden;
+    }
+    
+    .post-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 15px rgba(138, 43, 226, 0.2);
+    }
+    
+    .bg-primary-subtle {
+        background-color: rgba(138, 43, 226, 0.2);
+    }
+    
+    .text-primary-emphasis {
+        color: var(--accent);
+    }
+    
+    .blogger-card {
+        padding: 1.5rem;
+        background: linear-gradient(145deg, rgba(20, 20, 45, 0.8) 0%, rgba(30, 30, 65, 0.7) 100%);
+        border-radius: var(--card-border-radius);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(138, 43, 226, 0.2);
+    }
+    
+    .blogger-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 15px rgba(138, 43, 226, 0.2);
+    }
+    
+    .profile-image {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        border: 2px solid var(--primary-light);
+    }
+    
+    .profile-image-placeholder {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        color: white;
+        margin: 0 auto;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    
+    .btn-outline-light {
+        border-color: rgba(255, 255, 255, 0.3);
+        color: var(--text-light);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-outline-light:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.5);
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    .btn-outline-primary {
+        border-color: rgba(138, 43, 226, 0.5);
+        color: var(--accent);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-outline-primary:hover {
+        background-color: rgba(138, 43, 226, 0.1);
+        border-color: var(--primary);
+        color: var(--accent);
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %} 
